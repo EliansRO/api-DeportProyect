@@ -3,7 +3,8 @@
   "description": "Backend PHP/PDO para proyecto de grado",
   "require": {
     "php": ">=7.4",
-    "vlucas/phpdotenv": "^5.0"
+    "vlucas/phpdotenv": "^5.0",
+    "firebase/php-jwt": "^6.11"
   },
   "autoload": {
     "psr-4": {

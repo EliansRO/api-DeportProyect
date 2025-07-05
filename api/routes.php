@@ -1,66 +1,61 @@
 <?php
-// Carga de dependencias vía Composer y configuración de BD
+
+// Carga de dependencias y configuración
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../middlewares/auth.php';
 
 use App\Config\Database;
-use App\Controllers\UsuarioController;
-use App\Controllers\EquipoController;
-use App\Controllers\CampeonatoController;
-use App\Controllers\ArenaDeportivaController;
-use App\Controllers\ResultadoController;
-use App\Controllers\InscripcionUsuarioController;
-use App\Controllers\TablaCampeonatoController;
-use App\Controllers\SportController;
-use App\Controllers\FutbolController;
-use App\Controllers\FixtureController;
-use App\Controllers\InscripcionEquipoController;
-use App\Controllers\AuthController; // ✅ Activado
+use App\Controllers\{
+    UsuarioController,
+    EquipoController,
+    CampeonatoController,
+    ArenaDeportivaController,
+    ResultadoController,
+    InscripcionUsuarioController,
+    TablaCampeonatoController,
+    SportController,
+    FutbolController,
+    FixtureController,
+    InscripcionEquipoController,
+    AuthController
+};
 
-// Conexión a la base de datos
+// Base de datos
 $db = (new Database())->getConnection();
 
-// -------------------------------------------------------------
-// 👉 RUTAS con o sin index.php en la URL
-// -------------------------------------------------------------
+// 🔍 Parsear URI
 $uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 $parts = explode('/', $uri);
-
-// Detecta si la URL incluye "index.php"
 $indexPos = array_search('index.php', $parts);
-if ($indexPos !== false) {
-    $resource = $parts[$indexPos + 1] ?? null;
-    $id       = $parts[$indexPos + 2] ?? null;
-} else {
-    // Cuando se accede SIN index.php
-    $resource = $parts[2] ?? null;  // api-DeportProyect/api/usuarios → posición 2
-    $id       = $parts[3] ?? null;
-}
 
-// Verifica método HTTP
-$method = $_SERVER['REQUEST_METHOD'];
+$resource = $indexPos !== false ? $parts[$indexPos + 1] ?? null : $parts[2] ?? null;
+$id       = $indexPos !== false ? $parts[$indexPos + 2] ?? null : $parts[3] ?? null;
+$method   = $_SERVER['REQUEST_METHOD'];
 
-// -------------------------------------------------------------
-// ✅ Rutas de autenticación
-// -------------------------------------------------------------
-if ($resource === 'login' && $method === 'POST') {
-    (new AuthController($db))->login();
+// 🚪 Rutas públicas
+$auth = new AuthController($db);
+$publicRoutes = [
+    'login'    => fn() => $auth->login(),
+    'register' => fn() => $auth->register(),
+    'me'       => fn() => $auth->me(),
+    'logout'   => fn() => $auth->logout(),
+];
+
+if (array_key_exists($resource, $publicRoutes)) {
+    $publicRoutes[$resource]();
     exit;
 }
 
-if ($resource === 'me' && $method === 'GET') {
-    (new AuthController($db))->me(); // esto es opcional
+// 🔐 Verificación de autenticación con token
+$user = getAuthUser();
+if (!$user) {
+    http_response_code(401);
+    echo json_encode(['error' => 'No autenticado o token inválido']);
     exit;
 }
 
-if ($resource === 'logout' && $method === 'POST') {
-    (new AuthController($db))->logout(); // esto también opcional
-    exit;
-}
-
-// -------------------------------------------------------------
-// Mapeo recurso → controlador
-// -------------------------------------------------------------
+// 🚦 Mapeo RESTful
 $map = [
     'usuarios'              => UsuarioController::class,
     'equipos'               => EquipoController::class,
@@ -75,21 +70,17 @@ $map = [
     'inscripciones-equipo'  => InscripcionEquipoController::class,
 ];
 
-// -------------------------------------------------------------
-// Validar si la ruta existe
-// -------------------------------------------------------------
+// Validación de recurso
 if (!isset($map[$resource])) {
     http_response_code(404);
     echo json_encode(['error' => 'Ruta no encontrada']);
     exit;
 }
 
-// Instancia el controlador correspondiente
+// Instanciar controlador
 $ctrl = new $map[$resource]($db);
 
-// -------------------------------------------------------------
-// Enrutamiento RESTful
-// -------------------------------------------------------------
+// Enrutamiento por método
 switch ($method) {
     case 'GET':
         $id ? $ctrl->show((int)$id) : $ctrl->index();
@@ -101,23 +92,15 @@ switch ($method) {
 
     case 'PUT':
     case 'PATCH':
-        if ($id !== null) $ctrl->update((int)$id);
-        else {
-            http_response_code(400);
-            echo json_encode(['error'=>'ID requerido']);
-        }
+        $id ? $ctrl->update((int)$id) : http_response_code(400) && print(json_encode(['error' => 'ID requerido']));
         break;
 
     case 'DELETE':
-        if ($id !== null) $ctrl->delete((int)$id);
-        else {
-            http_response_code(400);
-            echo json_encode(['error'=>'ID requerido']);
-        }
+        $id ? $ctrl->delete((int)$id) : http_response_code(400) && print(json_encode(['error' => 'ID requerido']));
         break;
 
     default:
         http_response_code(405);
-        echo json_encode(['error'=>'Método no permitido']);
+        echo json_encode(['error' => 'Método no permitido']);
         break;
 }
