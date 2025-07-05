@@ -1,0 +1,16 @@
+{
+  "name": "tu_usuario/proyecto-backend",
+  "description": "Backend PHP/PDO para proyecto de grado",
+  "require": {
+    "php": ">=7.4",
+    "vlucas/phpdotenv": "^5.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.0"
+  }
+}

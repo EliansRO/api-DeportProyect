@@ -1,0 +1,56 @@
+# Archivos y carpetas generales del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Entorno de desarrollo
+.vscode/
+.idea/
+
+# Configuración de XAMPP (local)
+*.log
+*.tmp
+
+# Composer (dependencias)
+vendor/
+composer.lock
+
+# Archivos de configuración sensibles
+.env
+.env.local
+.env.*
+
+# Archivos temporales y caché
+*.bak
+*.swp
+*.swo
+*.tmp
+*.cache
+
+# Base de datos local exportada
+*.sql
+*.sqlite
+*.db
+
+# Archivos de depuración
+debug.json
+
+# Archivos del sistema de Apache
+.htaccess
+
+# Directorios de pruebas o uploads locales
+/storage/
+/uploads/
+/public/uploads/
+
+# Sistema de rutas de XAMPP (para evitar duplicados si usas htdocs)
+**/htdocs/
+
+# Archivos generados (ej. coverage o test results)
+coverage/
+*.xml
+*.out
+*.log
+
+# Node (si en algún momento usas frontend con npm)
+node_modules/
+dist/
