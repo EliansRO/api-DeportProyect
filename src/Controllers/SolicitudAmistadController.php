@@ -7,7 +7,7 @@ use PDOException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-require_once __DIR__ . '/../middlewares/auth.php';
+require_once __DIR__ . '/../../middlewares/auth.php';
 
 class SolicitudAmistadController
 {
@@ -35,6 +35,12 @@ class SolicitudAmistadController
     // Listar solicitudes recibidas
     public function index()
     {
+        // Si viene ?amigos=1 en la URL, redirige a listarAmigos()
+        if (isset($_GET['amigos']) && $_GET['amigos'] == 1) {
+            $this->listarAmigos();
+            return;
+        }
+
         try {
             $stmt = $this->db->prepare("
                 SELECT sa.*, u.nombre AS nombre_remitente
@@ -87,9 +93,13 @@ class SolicitudAmistadController
         }
 
         try {
+            // Verifica si ya existe una solicitud en ambos sentidos
             $stmt = $this->db->prepare("
                 SELECT * FROM SolicitudAmistad 
-                WHERE de_usuario_id = :de AND para_usuario_id = :para AND estado = 'pendiente'
+                WHERE 
+                    ((de_usuario_id = :de AND para_usuario_id = :para) 
+                    OR (de_usuario_id = :para AND para_usuario_id = :de))
+                    AND estado = 'pendiente'
             ");
             $stmt->execute([
                 ':de' => $this->user['id'],
@@ -100,12 +110,13 @@ class SolicitudAmistadController
                 http_response_code(409);
                 echo json_encode([
                     'status' => 409,
-                    'message' => 'Ya existe una solicitud pendiente',
+                    'message' => 'Ya existe una solicitud pendiente entre estos usuarios',
                     'data' => null
                 ]);
                 return;
             }
 
+            // Inserta la solicitud nueva
             $stmt = $this->db->prepare("
                 INSERT INTO SolicitudAmistad (de_usuario_id, para_usuario_id) 
                 VALUES (:de, :para)
@@ -115,6 +126,7 @@ class SolicitudAmistadController
                 ':para' => $data['para_usuario_id']
             ]);
 
+            http_response_code(201);
             echo json_encode([
                 'status' => 201,
                 'message' => 'Solicitud enviada correctamente',
@@ -125,10 +137,11 @@ class SolicitudAmistadController
             echo json_encode([
                 'status' => 500,
                 'message' => 'Error al enviar solicitud',
-                'data' => null
+                'data' => ['detalles' => $e->getMessage()]
             ]);
         }
     }
+
 
     // Aceptar o rechazar
     public function update(int $id)
@@ -217,4 +230,35 @@ class SolicitudAmistadController
             ]);
         }
     }
+
+    public function listarAmigos()
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT u.id, u.nombre, u.correo, u.url_foto_perfil
+                FROM SolicitudAmistad sa
+                JOIN Usuario u ON (
+                    (u.id = sa.de_usuario_id AND sa.para_usuario_id = :user_id)
+                    OR (u.id = sa.para_usuario_id AND sa.de_usuario_id = :user_id)
+                )
+                WHERE sa.estado = 'aceptado' AND :user_id IN (sa.de_usuario_id, sa.para_usuario_id)
+            ");
+            $stmt->execute([':user_id' => $this->user['id']]);
+            $amigos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Amigos obtenidos correctamente',
+                'data' => ['amigos' => $amigos]
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 500,
+                'message' => 'Error al obtener amigos',
+                'data' => ['detalles' => $e->getMessage()]
+            ]);
+        }
+    }
+
 }
