@@ -18,7 +18,8 @@ use App\Controllers\{
     FutbolController,
     FixtureController,
     InscripcionEquipoController,
-    AuthController
+    AuthController,
+    SolicitudAmistadController
 };
 
 // Base de datos
@@ -39,7 +40,6 @@ $publicRoutes = [
     'login'    => fn() => $auth->login(),
     'register' => fn() => $auth->register(),
     'me'       => fn() => $auth->me(),
-    'logout'   => fn() => $auth->logout(),
 ];
 
 if (array_key_exists($resource, $publicRoutes)) {
@@ -68,6 +68,8 @@ $map = [
     'futbol'                => FutbolController::class,
     'fixtures'              => FixtureController::class,
     'inscripciones-equipo'  => InscripcionEquipoController::class,
+    'solicitudes-amistad'   => SolicitudAmistadController::class,
+    'auth'                  => AuthController::class,
 ];
 
 // Validación de recurso
