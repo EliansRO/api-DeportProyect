@@ -19,7 +19,8 @@ use App\Controllers\{
     FixtureController,
     InscripcionEquipoController,
     AuthController,
-    SolicitudAmistadController
+    SolicitudAmistadController,
+    InvitacionEquipoController
 };
 
 // Base de datos
@@ -69,6 +70,8 @@ $map = [
     'fixtures'              => FixtureController::class,
     'inscripciones-equipo'  => InscripcionEquipoController::class,
     'solicitudes-amistad'   => SolicitudAmistadController::class,
+    'invitaciones-equipo'   => InvitacionEquipoController::class,
+    // Rutas de autenticación
     'auth'                  => AuthController::class,
 ];
 
