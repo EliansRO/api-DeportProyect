@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use PDO;
 use PDOException;
+use App\Models\AmistadModel;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -13,6 +14,7 @@ class SolicitudAmistadController
 {
     private $db;
     private $user;
+    private $amistadModel;
 
     public function __construct($db)
     {
@@ -29,18 +31,12 @@ class SolicitudAmistadController
             exit;
         }
 
+        $this->amistadModel = new AmistadModel($this->db);
         header('Content-Type: application/json');
     }
 
-    // Listar solicitudes recibidas
     public function index()
     {
-        // Si viene ?amigos=1 en la URL, redirige a listarAmigos()
-        if (isset($_GET['amigos']) && $_GET['amigos'] == 1) {
-            $this->listarAmigos();
-            return;
-        }
-
         try {
             $stmt = $this->db->prepare("
                 SELECT sa.*, u.nombre AS nombre_remitente
@@ -67,7 +63,6 @@ class SolicitudAmistadController
         }
     }
 
-    // Enviar solicitud
     public function store()
     {
         $data = json_decode(file_get_contents("php://input"), true);
@@ -93,7 +88,6 @@ class SolicitudAmistadController
         }
 
         try {
-            // Verifica si ya existe una solicitud en ambos sentidos
             $stmt = $this->db->prepare("
                 SELECT * FROM SolicitudAmistad 
                 WHERE 
@@ -116,7 +110,6 @@ class SolicitudAmistadController
                 return;
             }
 
-            // Inserta la solicitud nueva
             $stmt = $this->db->prepare("
                 INSERT INTO SolicitudAmistad (de_usuario_id, para_usuario_id) 
                 VALUES (:de, :para)
@@ -142,8 +135,6 @@ class SolicitudAmistadController
         }
     }
 
-
-    // Aceptar o rechazar
     public function update(int $id)
     {
         $data = json_decode(file_get_contents("php://input"), true);
@@ -171,6 +162,17 @@ class SolicitudAmistadController
             ]);
 
             if ($stmt->rowCount() > 0) {
+                if ($data['estado'] === 'aceptado') {
+                    // Obtener IDs de ambos usuarios
+                    $stmt2 = $this->db->prepare("SELECT de_usuario_id FROM SolicitudAmistad WHERE id = :id");
+                    $stmt2->execute([':id' => $id]);
+                    $solicitud = $stmt2->fetch(PDO::FETCH_ASSOC);
+
+                    if ($solicitud) {
+                        $this->amistadModel->crearAmistad($this->user['id'], $solicitud['de_usuario_id']);
+                    }
+                }
+
                 echo json_encode([
                     'status' => 200,
                     'message' => 'Solicitud actualizada correctamente',
@@ -194,7 +196,6 @@ class SolicitudAmistadController
         }
     }
 
-    // Cancelar o eliminar solicitud
     public function delete(int $id)
     {
         try {
@@ -230,35 +231,4 @@ class SolicitudAmistadController
             ]);
         }
     }
-
-    public function listarAmigos()
-    {
-        try {
-            $stmt = $this->db->prepare("
-                SELECT u.id, u.nombre, u.correo, u.url_foto_perfil
-                FROM SolicitudAmistad sa
-                JOIN Usuario u ON (
-                    (u.id = sa.de_usuario_id AND sa.para_usuario_id = :user_id)
-                    OR (u.id = sa.para_usuario_id AND sa.de_usuario_id = :user_id)
-                )
-                WHERE sa.estado = 'aceptado' AND :user_id IN (sa.de_usuario_id, sa.para_usuario_id)
-            ");
-            $stmt->execute([':user_id' => $this->user['id']]);
-            $amigos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            echo json_encode([
-                'status' => 200,
-                'message' => 'Amigos obtenidos correctamente',
-                'data' => ['amigos' => $amigos]
-            ]);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode([
-                'status' => 500,
-                'message' => 'Error al obtener amigos',
-                'data' => ['detalles' => $e->getMessage()]
-            ]);
-        }
-    }
-
 }
