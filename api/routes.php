@@ -13,6 +13,7 @@ use App\Controllers\{
     SolicitudAmistadController,
     AmistadController,
     InvitacionEquipoController,
+    MiembrosEquipoController,
 };
 
 // Base de datos
@@ -55,6 +56,7 @@ $map = [
     'solicitudes-amistad'   => SolicitudAmistadController::class,
     'amistades'             => AmistadController::class,
     'invitaciones-equipo'   => InvitacionEquipoController::class,
+    'miembros-equipo'       => MiembrosEquipoController::class,
     // Rutas de autenticación
     'auth'                  => AuthController::class,
 ];
