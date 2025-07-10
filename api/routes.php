@@ -85,13 +85,8 @@ $ctrl = new $map[$resource]($db);
 // Enrutamiento por método
 switch ($method) {
     case 'GET':
-        if ($resource === 'usuarios' && isset($parts[3]) && $parts[3] === 'email' && isset($parts[4])) {
-            (new UsuarioController($db))->showByEmail(urldecode($parts[4]));
-        } else {
-            $id ? $ctrl->show((int)$id) : $ctrl->index();
-        }
+        $id ? $ctrl->show((int)$id) : $ctrl->index();
         break;
-
     case 'POST':
         $ctrl->store();
         break;
