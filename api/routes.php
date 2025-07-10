@@ -49,6 +49,17 @@ if (!$user) {
     exit;
 }
 
+// —> Nueva ruta para buscar por email vía POST
+if ($resource === 'usuarios' && $method === 'POST' && isset($_SERVER['CONTENT_TYPE'])
+    && str_contains($_SERVER['CONTENT_TYPE'], 'application/json')
+    && isset($parts[3]) && $parts[3] === 'email'
+) {
+    // Leer body
+    $body = json_decode(file_get_contents('php://input'), true);
+    (new UsuarioController($db))->showByEmail($body['email'] ?? '');
+    exit;
+}
+
 // 🚦 Mapeo RESTful
 $map = [
     'usuarios'              => UsuarioController::class,
@@ -57,7 +68,6 @@ $map = [
     'amistades'             => AmistadController::class,
     'invitaciones-equipo'   => InvitacionEquipoController::class,
     'miembros-equipo'       => MiembrosEquipoController::class,
-    'usuarios/email' => UsuarioController::class,
     // Rutas de autenticación
     'auth'                  => AuthController::class,
 ];
