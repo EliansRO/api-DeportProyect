@@ -125,7 +125,7 @@ curl -X GET /usuarios -H "Authorization: Bearer <TOKEN>"
 curl -X GET /usuarios/7 -H "Authorization: Bearer <TOKEN>"
 
 # Obtener por email
-curl -X GET /usuarios/email -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" -d '{"email":"john.doe@ejemplo.com"}'
+curl -X POST /usuarios/email -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" -d '{"email":"john.doe@ejemplo.com"}'
 
 # Actualizar
 curl -X PUT /usuarios/7 -H "Authorization: Bearer <TOKEN>"   -H "Content-Type: application/json" -d '{"ciudad":"Medellín"}'
@@ -142,6 +142,9 @@ curl -X POST /equipos -H "Authorization: Bearer <TOKEN>"   -H "Content-Type: app
 
 # Listar
 curl -X GET /equipos -H "Authorization: Bearer <TOKEN>"
+
+#Buscar por Nombre
+curl -X POST /equipos/buscar -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" -d '{"nombre":"Example"}'
 
 # Detalle
 curl -X GET /equipos/3 -H "Authorization: Bearer <TOKEN>"

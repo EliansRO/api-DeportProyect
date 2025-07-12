@@ -52,13 +52,20 @@ if (!$user) {
 // —> Nueva ruta para buscar por email vía POST
 if ($resource === 'usuarios' && $method === 'POST' && isset($_SERVER['CONTENT_TYPE'])
     && str_contains($_SERVER['CONTENT_TYPE'], 'application/json')
-    && isset($parts[3]) && $parts[3] === 'email'
+    && isset($parts[4]) && $parts[4] === 'email'
 ) {
     // Leer body
     $body = json_decode(file_get_contents('php://input'), true);
     (new UsuarioController($db))->showByEmail($body['email'] ?? '');
     exit;
 }
+
+// —> Nueva ruta para buscar equipos por nombre vía POST
+if ($resource === 'equipos' && $method === 'POST' && isset($parts[4]) && $parts[4] === 'buscar') {
+    (new EquipoController($db))->buscarPorNombre();
+    exit;
+}
+
 
 // 🚦 Mapeo RESTful
 $map = [
@@ -90,7 +97,6 @@ switch ($method) {
     case 'POST':
         $ctrl->store();
         break;
-
     case 'PUT':
     case 'PATCH':
         $id ? $ctrl->update((int)$id) : http_response_code(400) && print(json_encode(['error' => 'ID requerido']));

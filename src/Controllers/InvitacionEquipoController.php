@@ -125,9 +125,7 @@ class InvitacionEquipoController
                 'data'    => ['detalles' => $resultado['error']]
             ]);
         } elseif ($resultado) {
-            // Si se acepta, añadimos al miembro al equipo
             if ($estado === 'aceptado') {
-                // obtenemos la invitación para saber el equipo y emisor
                 $inv = $this->model->obtenerPorId($id);
                 if ($inv) {
                     $this->miembrosModel->agregarMiembro(
@@ -137,9 +135,13 @@ class InvitacionEquipoController
                     );
                 }
             }
+
+            // Eliminar la invitación después de procesarla
+            $this->model->eliminarInvitacion($id, $this->user['id']);
+
             echo json_encode([
                 'status'  => 200,
-                'message' => 'Invitación actualizada correctamente',
+                'message' => 'Invitación procesada y eliminada correctamente',
                 'data'    => null
             ]);
         } else {
@@ -151,6 +153,7 @@ class InvitacionEquipoController
             ]);
         }
     }
+
 
     // DELETE /invitaciones-equipo/{id}
     public function delete(int $id)

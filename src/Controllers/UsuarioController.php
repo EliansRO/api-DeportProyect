@@ -111,6 +111,7 @@ class UsuarioController
         }
     }
 
+    
     public function update($id)
     {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -140,9 +141,20 @@ class UsuarioController
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
 
+            // Obtener el usuario actualizado
+            $stmt = $this->db->prepare("SELECT id, nombre, cedula, sexo, fecha_nacimiento,
+                                            estado_salud, correo, telefono, direccion, ciudad, pais,
+                                            url_foto_perfil, rol, fecha_registro, ultimo_login
+                                        FROM Usuario
+                                        WHERE id = :id");
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $usuarioActualizado = $stmt->fetch(PDO::FETCH_ASSOC);
+
             echo json_encode([
                 'status' => 200,
-                'message' => 'Usuario actualizado correctamente'
+                'message' => 'Usuario actualizado correctamente',
+                'data' => $usuarioActualizado
             ]);
         } catch (PDOException $e) {
             http_response_code(500);
@@ -153,6 +165,7 @@ class UsuarioController
             ]);
         }
     }
+
 
     public function delete($id)
     {

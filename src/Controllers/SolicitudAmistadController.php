@@ -142,59 +142,76 @@ class SolicitudAmistadController
         if (!in_array($data['estado'], ['aceptado', 'rechazado'])) {
             http_response_code(400);
             echo json_encode([
-                'status' => 400,
+                'status'  => 400,
                 'message' => 'Estado inválido',
-                'data' => null
+                'data'    => null
             ]);
             return;
         }
 
         try {
+            // Actualiza estado y fecha de respuesta
             $stmt = $this->db->prepare("
-                UPDATE SolicitudAmistad 
-                SET estado = :estado, fecha_respuesta = NOW() 
+                UPDATE SolicitudAmistad
+                SET estado = :estado, fecha_respuesta = NOW()
                 WHERE id = :id AND para_usuario_id = :user_id
             ");
             $stmt->execute([
-                ':estado' => $data['estado'],
-                ':id' => $id,
-                ':user_id' => $this->user['id']
+                ':estado'   => $data['estado'],
+                ':id'       => $id,
+                ':user_id'  => $this->user['id']
             ]);
 
             if ($stmt->rowCount() > 0) {
                 if ($data['estado'] === 'aceptado') {
-                    // Obtener IDs de ambos usuarios
-                    $stmt2 = $this->db->prepare("SELECT de_usuario_id FROM SolicitudAmistad WHERE id = :id");
+                    // Obtener el emisor de la solicitud
+                    $stmt2 = $this->db->prepare("
+                        SELECT de_usuario_id
+                        FROM SolicitudAmistad
+                        WHERE id = :id
+                    ");
                     $stmt2->execute([':id' => $id]);
                     $solicitud = $stmt2->fetch(PDO::FETCH_ASSOC);
 
                     if ($solicitud) {
-                        $this->amistadModel->crearAmistad($this->user['id'], $solicitud['de_usuario_id']);
+                        // Crear la amistad
+                        $this->amistadModel->crearAmistad(
+                            $this->user['id'],
+                            $solicitud['de_usuario_id']
+                        );
                     }
                 }
 
+                // Finalmente, eliminar la solicitud original
+                $del = $this->db->prepare("
+                    DELETE FROM SolicitudAmistad
+                    WHERE id = :id
+                ");
+                $del->execute([':id' => $id]);
+
                 echo json_encode([
-                    'status' => 200,
-                    'message' => 'Solicitud actualizada correctamente',
-                    'data' => null
+                    'status'  => 200,
+                    'message' => 'Solicitud procesada y eliminada correctamente',
+                    'data'    => null
                 ]);
             } else {
                 http_response_code(404);
                 echo json_encode([
-                    'status' => 404,
+                    'status'  => 404,
                     'message' => 'Solicitud no encontrada o no autorizada',
-                    'data' => null
+                    'data'    => null
                 ]);
             }
         } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode([
-                'status' => 500,
+                'status'  => 500,
                 'message' => 'Error al actualizar solicitud',
-                'data' => null
+                'data'    => null
             ]);
         }
     }
+
 
     public function delete(int $id)
     {

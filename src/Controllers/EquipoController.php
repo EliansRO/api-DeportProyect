@@ -140,6 +140,39 @@ class EquipoController
         }
     }
 
+    public function buscarPorNombre()
+    {
+        $data = json_decode(file_get_contents("php://input"), true);
+        $nombre = $data['nombre'] ?? '';
+
+        if (empty($nombre)) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 400,
+                'message' => 'El campo nombre es obligatorio',
+                'data' => null
+            ]);
+            return;
+        }
+
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM Equipo WHERE nombre LIKE :nombre");
+            $like = '%' . $nombre . '%';
+            $stmt->bindParam(':nombre', $like, PDO::PARAM_STR);
+            $stmt->execute();
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Equipos encontrados',
+                'data' => ['equipos' => $resultados]
+            ]);
+        } catch (PDOException $e) {
+            $this->errorResponse('Error al buscar equipos por nombre', $e);
+        }
+    }
+
+
     public function delete(int $id)
     {
         try {
