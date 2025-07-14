@@ -9,16 +9,11 @@ use App\Config\Database;
 use App\Controllers\{
     UsuarioController,
     EquipoController,
-    CampeonatoController,
-    ArenaDeportivaController,
-    ResultadoController,
-    InscripcionUsuarioController,
-    TablaCampeonatoController,
-    SportController,
-    FutbolController,
-    FixtureController,
-    InscripcionEquipoController,
-    AuthController
+    AuthController,
+    SolicitudAmistadController,
+    AmistadController,
+    InvitacionEquipoController,
+    MiembrosEquipoController,
 };
 
 // Base de datos
@@ -39,7 +34,6 @@ $publicRoutes = [
     'login'    => fn() => $auth->login(),
     'register' => fn() => $auth->register(),
     'me'       => fn() => $auth->me(),
-    'logout'   => fn() => $auth->logout(),
 ];
 
 if (array_key_exists($resource, $publicRoutes)) {
@@ -55,19 +49,34 @@ if (!$user) {
     exit;
 }
 
+// —> Nueva ruta para buscar por email vía POST
+if ($resource === 'usuarios' && $method === 'POST' && isset($_SERVER['CONTENT_TYPE'])
+    && str_contains($_SERVER['CONTENT_TYPE'], 'application/json')
+    && isset($parts[4]) && $parts[4] === 'email'
+) {
+    // Leer body
+    $body = json_decode(file_get_contents('php://input'), true);
+    (new UsuarioController($db))->showByEmail($body['email'] ?? '');
+    exit;
+}
+
+// —> Nueva ruta para buscar equipos por nombre vía POST
+if ($resource === 'equipos' && $method === 'POST' && isset($parts[4]) && $parts[4] === 'buscar') {
+    (new EquipoController($db))->buscarPorNombre();
+    exit;
+}
+
+
 // 🚦 Mapeo RESTful
 $map = [
     'usuarios'              => UsuarioController::class,
     'equipos'               => EquipoController::class,
-    'campeonatos'           => CampeonatoController::class,
-    'arenas'                => ArenaDeportivaController::class,
-    'resultados'            => ResultadoController::class,
-    'inscripciones-usuario' => InscripcionUsuarioController::class,
-    'tablas-campeonato'     => TablaCampeonatoController::class,
-    'deportes'              => SportController::class,
-    'futbol'                => FutbolController::class,
-    'fixtures'              => FixtureController::class,
-    'inscripciones-equipo'  => InscripcionEquipoController::class,
+    'solicitudes-amistad'   => SolicitudAmistadController::class,
+    'amistades'             => AmistadController::class,
+    'invitaciones-equipo'   => InvitacionEquipoController::class,
+    'miembros-equipo'       => MiembrosEquipoController::class,
+    // Rutas de autenticación
+    'auth'                  => AuthController::class,
 ];
 
 // Validación de recurso
@@ -85,11 +94,9 @@ switch ($method) {
     case 'GET':
         $id ? $ctrl->show((int)$id) : $ctrl->index();
         break;
-
     case 'POST':
         $ctrl->store();
         break;
-
     case 'PUT':
     case 'PATCH':
         $id ? $ctrl->update((int)$id) : http_response_code(400) && print(json_encode(['error' => 'ID requerido']));

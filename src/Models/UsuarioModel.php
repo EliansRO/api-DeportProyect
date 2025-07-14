@@ -26,7 +26,7 @@ class UsuarioModel {
         $sql = "INSERT INTO Usuario (nombre, cedula, sexo, fecha_nacimiento, correo, contraseña)
                 VALUES (:nombre, :cedula, :sexo, :fecha_nacimiento, :correo, :contraseña)";
         
-        $stmt = $this->conn->prepare($sql);
+        $stmt = $this->db->prepare($sql);
 
         $stmt->execute([
             ':nombre'           => $data['nombre'],
@@ -77,10 +77,8 @@ class UsuarioModel {
     }
 
     public function delete(int $id): bool {
-        return $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id")
-                        ->execute([':id' => $id]);
+        return $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id")->execute([':id' => $id]);
     }
-
         /**
      * Busca un usuario por correo
      *

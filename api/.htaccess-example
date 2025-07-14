@@ -1,0 +1,12 @@
+<IfModule mod_dir.c>
+  # Desactivar redirección de slash automático → evita pérdida de POST payload
+  DirectorySlash Off
+</IfModule>
+
+RewriteEngine On
+RewriteBase /api-DeportProyect/api/
+
+# No redirigir si es archivo o carpeta real
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
