@@ -67,6 +67,7 @@ class SolicitudAmistadController
     {
         $data = json_decode(file_get_contents("php://input"), true);
 
+        // Validar campos obligatorios
         if (empty($data['para_usuario_id'])) {
             http_response_code(400);
             echo json_encode([
@@ -77,6 +78,7 @@ class SolicitudAmistadController
             return;
         }
 
+        // Validar que el destinatario no sea el mismo usuario
         if ($this->user['id'] == $data['para_usuario_id']) {
             http_response_code(400);
             echo json_encode([
@@ -100,6 +102,7 @@ class SolicitudAmistadController
                 ':para' => $data['para_usuario_id']
             ]);
 
+            // Verificar si ya existe una solicitud pendiente entre estos usuarios
             if ($stmt->fetch()) {
                 http_response_code(409);
                 echo json_encode([

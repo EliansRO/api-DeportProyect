@@ -56,6 +56,7 @@ class AmistadController
     {
         $data = json_decode(file_get_contents("php://input"), true);
 
+        // Validar que el campo usuario_id no esté vacío
         if (empty($data['usuario_id'])) {
             http_response_code(400);
             echo json_encode([
@@ -66,6 +67,7 @@ class AmistadController
             return;
         }
 
+        // Validar que el usuario no intente ser amigo de sí mismo
         if ($data['usuario_id'] == $this->user['id']) {
             http_response_code(400);
             echo json_encode([
@@ -78,6 +80,7 @@ class AmistadController
 
         $resultado = $this->model->crearAmistad($this->user['id'], $data['usuario_id']);
 
+        // Si el resultado es un array con un error, devolver 409
         if (is_array($resultado) && isset($resultado['error'])) {
             http_response_code(409);
             echo json_encode([

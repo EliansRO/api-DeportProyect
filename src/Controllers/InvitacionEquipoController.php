@@ -56,6 +56,8 @@ class InvitacionEquipoController
     public function store()
     {
         $data = json_decode(file_get_contents("php://input"), true);
+
+        // Validar campos obligatorios
         if (empty($data['para_usuario_id']) || empty($data['equipo_id'])) {
             http_response_code(400);
             echo json_encode([
@@ -65,6 +67,8 @@ class InvitacionEquipoController
             ]);
             return;
         }
+
+        // Validar que el usuario no se invite a sí mismo
         if ($data['para_usuario_id'] == $this->user['id']) {
             http_response_code(400);
             echo json_encode([
@@ -81,7 +85,8 @@ class InvitacionEquipoController
             $data['equipo_id'],
             $data['mensaje'] ?? null
         );
-
+        
+        // Manejar errores específicos de la invitación
         if (is_array($resultado) && isset($resultado['error'])) {
             http_response_code(409);
             echo json_encode([
