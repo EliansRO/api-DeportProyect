@@ -20,6 +20,7 @@ class EquipoController
         $this->model = new EquipoModel($db);
         $this->user = getAuthUser();
 
+        // Verificar si el usuario está autenticado
         if (!$this->user) {
             http_response_code(401);
             echo json_encode([
@@ -51,6 +52,8 @@ class EquipoController
     {
         try {
             $equipo = $this->model->obtenerPorId($id);
+
+            // Verificar si el equipo existe
             if ($equipo) {
                 echo json_encode([
                     'status' => 200,
@@ -107,6 +110,8 @@ class EquipoController
 
         try {
             $equipo = $this->model->obtenerPorId($id);
+            
+            // Verificar si el equipo existe
             if (!$equipo) {
                 http_response_code(404);
                 echo json_encode([
@@ -117,6 +122,7 @@ class EquipoController
                 return;
             }
 
+            // Validar que el usuario sea el propietario del equipo
             if ($equipo['propietario_id'] != $this->user['id']) {
                 http_response_code(403);
                 echo json_encode([
@@ -178,6 +184,8 @@ class EquipoController
     {
         try {
             $equipo = $this->model->obtenerPorId($id);
+
+            // Verificar si el equipo existe
             if (!$equipo) {
                 http_response_code(404);
                 echo json_encode([
@@ -188,6 +196,7 @@ class EquipoController
                 return;
             }
 
+            // Verificar si el usuario es el propietario del equipo
             if ($equipo['propietario_id'] != $this->user['id']) {
                 http_response_code(403);
                 echo json_encode([

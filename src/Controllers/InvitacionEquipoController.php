@@ -110,6 +110,7 @@ class InvitacionEquipoController
         $data   = json_decode(file_get_contents("php://input"), true);
         $estado = $data['estado'] ?? '';
 
+        // Validar que el estado sea aceptado o rechazado
         if (!in_array($estado, ['aceptado', 'rechazado'])) {
             http_response_code(400);
             echo json_encode([
@@ -120,16 +121,19 @@ class InvitacionEquipoController
             return;
         }
 
+        // Actualizar el estado de la invitación
         $resultado = $this->model->actualizarEstadoInvitacion($id, $this->user['id'], $estado);
 
+        // Manejar errores específicos de la actualización
         if (is_array($resultado) && isset($resultado['error'])) {
             http_response_code(500);
             echo json_encode([
                 'status'  => 500,
                 'message' => 'Error al actualizar invitación',
-                'data'    => ['detalles' => $resultado['error']]
+                'data'    => $resultado['error']
             ]);
         } elseif ($resultado) {
+            // Si la invitación fue aceptada, agregar el usuario al equipo
             if ($estado === 'aceptado') {
                 $inv = $this->model->obtenerPorId($id);
                 if ($inv) {
