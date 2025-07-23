@@ -74,11 +74,12 @@ class EquipoController
     {
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (empty($data['nombre']) || empty($data['anio_fundacion'])) {
+        // Validar que los campos obligatorios no estén vacíos
+        if (empty($data['nombre']) || empty($data['deporte'])) {
             http_response_code(400);
             echo json_encode([
                 'status' => 400,
-                'message' => 'Faltan campos obligatorios (nombre, anio_fundacion)',
+                'message' => 'Faltan campos obligatorios (nombre, deporte)',
                 'data' => null
             ]);
             return;
