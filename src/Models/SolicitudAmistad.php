@@ -53,6 +53,19 @@ class SolicitudAmistad
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function obtenerSolicitudesParaUsuario($usuarioId)
+    {
+        $stmt = $this->db->prepare("
+            SELECT sa.*, u.nombre AS nombre_remitente
+            FROM SolicitudAmistad sa
+            JOIN Usuario u ON u.id = sa.de_usuario_id
+            WHERE sa.para_usuario_id = :id
+            ORDER BY sa.fecha_envio DESC
+        ");
+        $stmt->execute([':id' => $usuarioId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function actualizarEstado($id, $nuevoEstado)
     {
         try {

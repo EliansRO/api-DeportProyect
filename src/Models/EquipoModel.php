@@ -96,4 +96,24 @@ class EquipoModel
         $stmt = $this->db->prepare("DELETE FROM Equipo WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }
+
+    public function obtenerPorPropietario(int $usuarioId): array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM Equipo WHERE propietario_id = :usuarioId");
+        $stmt->bindParam(':usuarioId', $usuarioId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerComoMiembro(int $usuarioId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT e.* FROM Equipo e
+            INNER JOIN MiembrosEquipo me ON e.id = me.equipo_id
+            WHERE me.usuario_id = :usuarioId
+        ");
+        $stmt->bindParam(':usuarioId', $usuarioId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

@@ -73,6 +73,34 @@ class EquipoController
         }
     }
 
+    public function misEquipos()
+    {
+        try {
+            $usuarioId = $this->user['id'];
+
+            $equiposPropietarios = $this->model->obtenerPorPropietario($usuarioId);
+            $equiposMiembros = $this->model->obtenerComoMiembro($usuarioId);
+
+            // Combinar ambos arrays
+            $todosEquipos = array_merge($equiposPropietarios, $equiposMiembros);
+
+            // Eliminar duplicados basándonos en el id del equipo
+            $equiposUnicos = [];
+            foreach ($todosEquipos as $equipo) {
+                $equiposUnicos[$equipo['id']] = $equipo;
+            }
+            $equiposUnicos = array_values($equiposUnicos);
+
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Equipos del usuario obtenidos correctamente',
+                'data' => $equiposUnicos
+            ]);
+        } catch (PDOException $e) {
+            $this->errorResponse('Error al obtener los equipos del usuario', $e);
+        }
+    }
+
     public function store()
     {
         $data = json_decode(file_get_contents("php://input"), true);

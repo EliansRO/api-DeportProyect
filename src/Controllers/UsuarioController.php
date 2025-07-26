@@ -2,27 +2,24 @@
 
 namespace App\Controllers;
 
+use App\Models\UsuarioModel;
 use PDO;
 use PDOException;
 
 class UsuarioController
 {
-    private $db;
+    private UsuarioModel $usuarioModel;
 
     public function __construct(PDO $db)
     {
-        $this->db = $db;
+        $this->usuarioModel = new UsuarioModel($db);
         header('Content-Type: application/json');
     }
 
     public function index()
     {
         try {
-            $stmt = $this->db->query("SELECT id, nombre, cedula, sexo, fecha_nacimiento,
-                                             estado_salud, correo, telefono, direccion, ciudad, pais,
-                                             url_foto_perfil, rol, fecha_registro, ultimo_login
-                                      FROM Usuario");
-            $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $usuarios = $this->usuarioModel->getAll();
 
             echo json_encode([
                 'status' => 200,
@@ -42,15 +39,7 @@ class UsuarioController
     public function show($id)
     {
         try {
-            $stmt = $this->db->prepare("SELECT id, nombre, cedula, sexo, fecha_nacimiento,
-                                               estado_salud, correo, telefono, direccion, ciudad, pais,
-                                               url_foto_perfil, rol, fecha_registro, ultimo_login
-                                        FROM Usuario
-                                        WHERE id = :id");
-            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+            $usuario = $this->usuarioModel->getById((int)$id);
 
             if ($usuario) {
                 echo json_encode([
@@ -78,15 +67,7 @@ class UsuarioController
     public function showByEmail($email)
     {
         try {
-            $stmt = $this->db->prepare("SELECT id, nombre, cedula, sexo, fecha_nacimiento,
-                                               estado_salud, correo, telefono, direccion, ciudad, pais,
-                                               url_foto_perfil, rol, fecha_registro, ultimo_login
-                                        FROM Usuario
-                                        WHERE correo = :correo");
-            $stmt->bindParam(':correo', $email, PDO::PARAM_STR);
-            $stmt->execute();
-
-            $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+            $usuario = $this->usuarioModel->findByEmail($email);
 
             if ($usuario) {
                 echo json_encode([
@@ -111,23 +92,11 @@ class UsuarioController
         }
     }
 
-    
     public function update($id)
     {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $campos = ['nombre', 'cedula', 'sexo', 'fecha_nacimiento', 'estado_salud', 'correo', 'telefono', 'direccion', 'ciudad', 'pais', 'url_foto_perfil', 'rol'];
-        $setClause = [];
-        $params = [':id' => $id];
-
-        foreach ($campos as $campo) {
-            if (isset($data[$campo])) {
-                $setClause[] = "$campo = :$campo";
-                $params[":$campo"] = $data[$campo];
-            }
-        }
-
-        if (empty($setClause)) {
+        if (empty($data)) {
             http_response_code(400);
             echo json_encode([
                 'status' => 400,
@@ -137,25 +106,22 @@ class UsuarioController
         }
 
         try {
-            $sql = "UPDATE Usuario SET " . implode(', ', $setClause) . " WHERE id = :id";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute($params);
+            $actualizado = $this->usuarioModel->update((int)$id, $data);
 
-            // Obtener el usuario actualizado
-            $stmt = $this->db->prepare("SELECT id, nombre, cedula, sexo, fecha_nacimiento,
-                                            estado_salud, correo, telefono, direccion, ciudad, pais,
-                                            url_foto_perfil, rol, fecha_registro, ultimo_login
-                                        FROM Usuario
-                                        WHERE id = :id");
-            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            $stmt->execute();
-            $usuarioActualizado = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            echo json_encode([
-                'status' => 200,
-                'message' => 'Usuario actualizado correctamente',
-                'data' => $usuarioActualizado
-            ]);
+            if ($actualizado) {
+                $usuarioActualizado = $this->usuarioModel->getById((int)$id);
+                echo json_encode([
+                    'status' => 200,
+                    'message' => 'Usuario actualizado correctamente',
+                    'data' => $usuarioActualizado
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'status' => 404,
+                    'message' => 'Usuario no encontrado o sin cambios'
+                ]);
+            }
         } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode([
@@ -166,15 +132,12 @@ class UsuarioController
         }
     }
 
-
     public function delete($id)
     {
         try {
-            $stmt = $this->db->prepare("DELETE FROM Usuario WHERE id = :id");
-            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            $stmt->execute();
+            $eliminado = $this->usuarioModel->delete((int)$id);
 
-            if ($stmt->rowCount() > 0) {
+            if ($eliminado) {
                 echo json_encode([
                     'status' => 200,
                     'message' => 'Usuario eliminado correctamente'
