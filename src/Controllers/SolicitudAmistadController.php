@@ -142,6 +142,7 @@ class SolicitudAmistadController
     {
         $data = json_decode(file_get_contents("php://input"), true);
 
+        // Validar que el estado sea aceptado o rechazado
         if (!in_array($data['estado'], ['aceptado', 'rechazado'])) {
             http_response_code(400);
             echo json_encode([
