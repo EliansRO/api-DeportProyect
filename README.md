@@ -143,6 +143,10 @@ curl -X POST /equipos -H "Authorization: Bearer <TOKEN>"   -H "Content-Type: app
 # Listar
 curl -X GET /equipos -H "Authorization: Bearer <TOKEN>"
 
+#Ver los equipos a los que un usuario esta relacionado, sea como miembro o como propietario
+curl -X GET /equipos/mis-equipos -H "Authorization: Bearer <TOKEN>"
+
+
 #Buscar por Nombre
 curl -X POST /equipos/buscar -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" -d '{"nombre":"Example"}'
 

@@ -66,6 +66,12 @@ if ($resource === 'equipos' && $method === 'POST' && isset($parts[4]) && $parts[
     exit;
 }
 
+// —> Nueva ruta para obtener los equipos del usuario autenticado
+if ($resource === 'equipos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'mis-equipos') {
+    (new EquipoController($db))->misEquipos();
+    exit;
+}
+
 
 // 🚦 Mapeo RESTful
 $map = [
