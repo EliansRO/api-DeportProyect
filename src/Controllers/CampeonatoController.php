@@ -66,6 +66,103 @@ class CampeonatoController
         }
     }
 
+    // GET /campeonatos/propietario/{propietarioId}
+    public function showByPropietario(int $propietarioId)
+    {
+        // Validación: el ID de propietario debe ser un número mayor a 0
+        if ($propietarioId <= 0) {
+            http_response_code(400);
+            echo json_encode([
+                'status'  => 400,
+                'message' => 'ID de propietario inválido'
+            ]);
+            return;
+        }
+
+        try {
+            $items = $this->model->obtenerPorPropietario($propietarioId);
+            if ($items) {
+                echo json_encode([
+                    'status'  => 200,
+                    'message' => 'Campeonatos obtenidos por propietario',
+                    'data'    => $items
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'status'  => 404,
+                    'message' => 'No se encontraron campeonatos para este propietario'
+                ]);
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 500,
+                'message' => 'Error al obtener campeonatos por propietario',
+                'details' => $e->getMessage()
+            ]);
+        }
+    }
+
+    // GET /campeonatos/buscar?nombre={nombre}
+    public function buscarPorNombre()
+    {
+        $nombre = $_GET['nombre'] ?? '';
+        $nombre = trim($nombre);
+        
+        // Validación: el parámetro "nombre" es requerido
+        if (empty($nombre)) {
+            http_response_code(400);
+            echo json_encode([
+                'status'  => 400,
+                'message' => 'El parámetro "nombre" es requerido'
+            ]);
+            return;
+        }
+
+        // Validación: el nombre debe tener un mínimo de 3 caracteres y un máximo de 255
+        if (strlen($nombre) < 3) {
+            http_response_code(422);
+            echo json_encode([
+                'status'  => 422,
+                'message' => 'El parámetro "nombre" debe tener al menos 3 caracteres'
+            ]);
+            return;
+        }
+        if (strlen($nombre) > 255) {
+            http_response_code(422);
+            echo json_encode([
+                'status'  => 422,
+                'message' => 'El parámetro "nombre" excede la longitud permitida'
+            ]);
+            return;
+        }
+
+        try {
+            $items = $this->model->obtenerPorNombre($nombre);
+            if ($items) {
+                echo json_encode([
+                    'status'  => 200,
+                    'message' => 'Campeonatos encontrados',
+                    'data'    => $items
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'status'  => 404,
+                    'message' => 'No se encontraron campeonatos con ese nombre'
+                ]);
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 500,
+                'message' => 'Error al buscar campeonatos',
+                'details' => $e->getMessage()
+            ]);
+        }
+    }
+
     // POST /campeonatos
     public function store()
     {

@@ -42,6 +42,22 @@ class CampeonatoModel
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function obtenerPorPropietario($propietarioId)
+    {
+        $query = "SELECT * FROM {$this->table} WHERE propietario_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([$propietarioId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerPorNombre($nombre)
+    {
+        $query = "SELECT * FROM {$this->table} WHERE nombre LIKE ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute(['%' . $nombre . '%']);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function eliminar($id)
     {
         $query = "DELETE FROM {$this->table} WHERE id = ?";
