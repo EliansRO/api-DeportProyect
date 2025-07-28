@@ -22,38 +22,45 @@ class InvitacionCampeonatosController
     // Obtener todas las invitaciones
     public function index()
     {
-        try {
-            $items = $this->model->obtenerPorCampeonato(null);
-            echo json_encode(['status' => 200, 'message' => 'Invitaciones de campeonatos obtenidas', 'data' => $items]);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(['status' => 500, 'message' => 'Error al obtener invitaciones', 'details' => $e->getMessage()]);
-        }
-    }
-
-    // Obtener una invitación por ID
-    public function show(int $id)
-    {
-        if ($id <= 0) {
-            http_response_code(400);
-            echo json_encode(['status' => 400, 'message' => 'ID inválido']);
+        $user = getAuthUser();
+        if (!$user || !isset($user['id']) || !is_numeric($user['id']) || $user['id'] <= 0) {
+            http_response_code(401);
+            echo json_encode(['status' => 401, 'message' => 'Usuario no autenticado o ID inválido']);
             return;
         }
+        $id = (int)$user['id'];
+
         try {
-            $all = $this->model->obtenerPorCampeonato(null);
-            $item = null;
-            foreach ($all as $inv) {
-                if ($inv['id'] == $id) { $item = $inv; break; }
+            $invitaciones = $this->model->obtenerInvitacionPorParaUsuarioId($id);
+            // Validar que el resultado sea un arreglo
+            if (!is_array($invitaciones)) {
+                http_response_code(500);
+                echo json_encode([
+                    'status'  => 500,
+                    'message' => 'Error interno: datos de invitaciones inválidos'
+                ]);
+                return;
             }
-            if ($item) {
-                echo json_encode(['status' => 200, 'message' => 'Invitación obtenida', 'data' => $item]);
+            if (!empty($invitaciones)) {
+                echo json_encode([
+                    'status'  => 200,
+                    'message' => 'Invitaciones obtenidas',
+                    'data'    => $invitaciones
+                ]);
             } else {
                 http_response_code(404);
-                echo json_encode(['status' => 404, 'message' => 'Invitación no encontrada']);
+                echo json_encode([
+                    'status'  => 404,
+                    'message' => 'No se encontraron invitaciones'
+                ]);
             }
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(['status' => 500, 'message' => 'Error al obtener invitación', 'details' => $e->getMessage()]);
+            echo json_encode([
+                'status'  => 500,
+                'message' => 'Error al obtener invitaciones',
+                'details' => $e->getMessage()
+            ]);
         }
     }
 
@@ -67,28 +74,60 @@ class InvitacionCampeonatosController
             return;
         }
 
-        // Validar campos requeridos (ajusta los nombres de campo según tu modelo)
+        // Validar campos requeridos (se espera id_campeonato, id_usuario y equipo_id)
         if (
             !isset($data['id_campeonato']) || !is_numeric($data['id_campeonato']) ||
             !isset($data['id_usuario']) || !is_numeric($data['id_usuario']) ||
-            !isset($data['correo']) || !filter_var($data['correo'], FILTER_VALIDATE_EMAIL)
+            !isset($data['equipo_id']) || !is_numeric($data['equipo_id'])
         ) {
             http_response_code(400);
-            echo json_encode(['status' => 400, 'message' => 'Campos id_campeonato, id_usuario y correo son requeridos y deben ser válidos']);
+            echo json_encode([
+            'status'  => 400,
+            'message' => 'Campos id_campeonato, id_usuario y equipo_id son requeridos y deben ser válidos'
+            ]);
             return;
         }
 
+        // Se asume que el usuario autenticado es quien envía la invitación
+        $de_usuario = getAuthUser();
+        if (!$de_usuario) {
+            http_response_code(401);
+            echo json_encode(['status' => 401, 'message' => 'No autenticado']);
+            return;
+        }
+
+        // Construir el arreglo de datos según lo que requiere el modelo
+        $insertData = [
+            'campeonato_id'   => (int)$data['id_campeonato'],
+            // Se utiliza 'equipo_id' si se envía en el request, o null en caso contrario
+            'equipo_id'       => isset($data['equipo_id']) ? (int)$data['equipo_id'] : null,
+            'de_usuario_id'   => $de_usuario['id'],
+            'para_usuario_id' => (int)$data['id_usuario'],
+            'mensaje'         => isset($data['mensaje']) ? trim($data['mensaje']) : '',
+            'estado'          => 'pendiente',
+            'fecha_envio'     => date('Y-m-d H:i:s'),
+            'fecha_respuesta' => null
+        ];
+
         try {
-            $created = $this->model->crear($data);
+            $created = $this->model->crear($insertData);
             if ($created) {
-                echo json_encode(['status' => 201, 'message' => 'Invitación creada', 'data' => $data]);
+                echo json_encode([
+                    'status'  => 201,
+                    'message' => 'Invitación creada',
+                    'data'    => $insertData
+                ]);
             } else {
                 http_response_code(500);
                 echo json_encode(['status' => 500, 'message' => 'Error al crear invitación']);
             }
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(['status' => 500, 'message' => 'Error al crear invitación', 'details' => $e->getMessage()]);
+            echo json_encode([
+                'status'  => 500,
+                'message' => 'Error al crear invitación',
+                'details' => $e->getMessage()
+            ]);
         }
     }
 

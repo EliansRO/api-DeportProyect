@@ -28,14 +28,6 @@ class InvitacionCampeonatosModel
         }
     }
 
-    public function obtenerPorCampeonato($campeonatoId)
-    {
-        $query = "SELECT * FROM {$this->table} WHERE campeonato_id = ?";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$campeonatoId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
     public function actualizarEstado($id, $estado)
     {
         $query = "UPDATE {$this->table} SET estado = ? WHERE id = ?";
@@ -48,6 +40,14 @@ class InvitacionCampeonatosModel
         $query = "DELETE FROM {$this->table} WHERE id = ?";
         $stmt = $this->db->prepare($query);
         return $stmt->execute([$id]);
+    }
+
+    public function obtenerInvitacionPorParaUsuarioId($id)
+    {
+        $query = "SELECT * FROM {$this->table} WHERE para_usuario_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([$id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function obtenerPorId($id)
