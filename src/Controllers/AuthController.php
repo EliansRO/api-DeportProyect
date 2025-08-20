@@ -120,6 +120,7 @@ class AuthController
                 'rol'    => $usuario['rol'],
                 'exp'    => time() + (60 * 60 * 24)
             ];
+            // Codifica el token
             $token = JWT::encode($payload, $this->jwtSecret, 'HS256');
 
             // Devuelve la respuesta con status, message y data

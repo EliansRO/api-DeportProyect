@@ -14,9 +14,12 @@ use App\Controllers\{
     AmistadController,
     InvitacionEquipoController,
     MiembrosEquipoController,
-    CampeonatoController,             // <-- nuevo
-    InvitacionCampeonatosController,  // <-- nuevo
-    MiembrosCampeonatosController     // <-- nuevo
+    CampeonatoController,             
+    EscenarioDeportivoController,
+    InvitacionCampeonatosController,  
+    MiembrosCampeonatosController,   
+    PartidoController,
+    FaseController
 };
 
  // Base de datos
@@ -82,6 +85,45 @@ if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $par
     exit;
 }
 
+// Nuevo endpoint para filtrar campeonatos por estado
+if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar' && isset($_GET['estado'])) {
+    (new CampeonatoController($db))->showByEstado($_GET['estado']);
+    exit;
+}
+
+// Nuevo endpoint para buscar campeonatos por deporte
+if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar' && isset($_GET['deporte'])) {
+    (new CampeonatoController($db))->showByDeporte($_GET['deporte']);
+    exit;
+}
+
+/*if ($resource === 'miembros-campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar') {
+    (new MiembrosCampeonatosController($db))->searchByName();
+    exit;
+}*/
+
+if($resource === 'fases' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'campeonato') {
+    (new FaseController($db))->showByCampeonato($parts[5] ?? null);
+    exit;
+}
+
+if($resource === 'partidos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'fase') {
+    (new PartidoController($db))->showByFase($parts[5] ?? null);
+    exit;
+}
+
+if ($resource === 'partidos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'entre') {
+    $fechaInicio = $parts[5] ?? null;
+    $fechaFin = $parts[6] ?? null;
+    (new PartidoController($db))->buscarPorFecha($fechaInicio, $fechaFin);
+    exit;
+}
+
+if ($resource === 'escenarios-deportivos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar') {
+    (new EscenarioDeportivoController($db))->showByName($nombre = $parts[5] ?? null);
+    exit;
+}
+
 
 // 🚦 Mapeo RESTful
 $map = [
@@ -95,6 +137,9 @@ $map = [
     'miembros-campeonatos'     => MiembrosCampeonatosController::class,      // <-- nuevo
     'invitaciones-campeonatos' => InvitacionCampeonatosController::class,    // <-- nuevo
     'auth'                     => AuthController::class,
+    'escenarios-deportivos'    => EscenarioDeportivoController::class,
+    'partidos'                 => PartidoController::class,
+    'fases'                    => FaseController::class,
 ];
 
 if (!isset($map[$resource])) {

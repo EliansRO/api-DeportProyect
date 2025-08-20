@@ -163,9 +163,108 @@ class CampeonatoController
         }
     }
 
+    // GET /campeonatos/buscar?estado={estado}
+    public function showByEstado(string $estado)
+    {
+        // Validación: el parámetro "estado" es requerido
+        if (empty($estado)) {
+            http_response_code(400);
+            echo json_encode([
+                'status'  => 400,
+                'message' => 'El parámetro "estado" es requerido'
+            ]);
+            return;
+        }
+
+        // Validación: el estado debe ser uno de los valores permitidos
+        $validStates = ['borrador', 'activo', 'finalizado'];
+
+        if (!in_array($estado, $validStates)) {
+            http_response_code(422);
+            echo json_encode([
+                'status'  => 422,
+                'message' => 'El estado debe ser uno de los siguientes: ' . implode(', ', $validStates)
+            ]);
+            return;
+        }
+
+        try {
+            $items = $this->model->obtenerPorEstado($estado);
+            if ($items) {
+                echo json_encode([
+                    'status'  => 200,
+                    'message' => 'Campeonatos obtenidos por estado',
+                    'data'    => $items
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'status'  => 404,
+                    'message' => 'No se encontraron campeonatos para este estado'
+                ]);
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 500,
+                'message' => 'Error al obtener campeonatos por estado',
+                'details' => $e->getMessage()
+            ]);
+        }
+    }
+
+    // GET /campeonatos/buscar?deporte={deporte}
+    public function showByDeporte(string $deporte)
+    {
+        // Validación: el parámetro "deporte" es requerido
+        if (empty($deporte)) {
+            http_response_code(400);
+            echo json_encode([
+                'status'  => 400,
+                'message' => 'El parámetro "deporte" es requerido'
+            ]);
+            return;
+        }
+
+        try {
+            $items = $this->model->obtenerPorDeporte($deporte);
+            if ($items) {
+                echo json_encode([
+                    'status'  => 200,
+                    'message' => 'Campeonatos obtenidos por deporte',
+                    'data'    => $items
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'status'  => 404,
+                    'message' => 'No se encontraron campeonatos para este deporte'
+                ]);
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 500,
+                'message' => 'Error al obtener campeonatos por deporte',
+                'details' => $e->getMessage()
+            ]);
+        }
+    }
+
     // POST /campeonatos
     public function store()
     {
+        // Validación: el usuario debe estar autenticado
+        $user = getAuthUser(); // función que retorna el usuario autenticado
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode([
+                'status'  => 401,
+                'message' => 'Usuario no autenticado'
+            ]);
+            return;
+        }
+
         $data = json_decode(file_get_contents('php://input'), true);
         if (!$data) {
             http_response_code(400);
@@ -185,6 +284,21 @@ class CampeonatoController
             ]);
             return;
         }
+
+        $data = [
+            'nombre'                    => $_POST['nombre'] ?? null,
+            'descripcion'               => $_POST['descripcion'] ?? null,
+            'telefono_contacto'         => $user['telefono'] ?? null,
+            'estado'                    => $_POST['estado'] ?? 'borrador',
+            'inscripciones_abiertas'    => $_POST['inscripciones_abiertas'] ?? null,
+            'fecha_inicio'              => $_POST['fecha_inicio'] ?? null,
+            'fecha_fin'                 => $_POST['fecha_fin'] ?? null,
+            'deporte'                   => $_POST['deporte'] ?? null,
+            'numero_jugadores'          => $_POST['numero_jugadores'] ?? null,
+            'numero_suplentes'          => $_POST['numero_suplentes'] ?? null,
+            'numero_equipos'            => $_POST['numero_equipos'] ?? null,
+            'propietario_id'            => $user['id'] // ID del propietario del campeonato
+        ];
 
         try {
             $created = $this->model->crear($data);
@@ -254,6 +368,20 @@ class CampeonatoController
             ]);
             return;
         }
+
+        $data = [
+            'nombre'                    => $_POST['nombre'] ?? null,
+            'descripcion'               => $_POST['descripcion'] ?? null,
+            'telefono_contacto'         => $user['telefono'] ?? null,
+            'estado'                    => $_POST['estado'] ?? 'borrador',
+            'inscripciones_abiertas'    => $_POST['inscripciones_abiertas'] ?? null,
+            'fecha_inicio'              => $_POST['fecha_inicio'] ?? null,
+            'fecha_fin'                 => $_POST['fecha_fin'] ?? null,
+            'deporte'                   => $_POST['deporte'] ?? null,
+            'numero_jugadores'          => $_POST['numero_jugadores'] ?? null,
+            'numero_suplentes'          => $_POST['numero_suplentes'] ?? null,
+            'numero_equipos'            => $_POST['numero_equipos'] ?? null
+        ];
 
         try {
             // Se asume que el modelo tiene un método 'actualizar' para modificar el registro existente.
