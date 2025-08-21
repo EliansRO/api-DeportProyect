@@ -163,7 +163,7 @@ class CampeonatoController
         }
     }
 
-    // GET /campeonatos/buscar?estado={estado}
+    // GET /campeonatos/estado/{estado}
     public function showByEstado(string $estado)
     {
         // Validación: el parámetro "estado" es requerido
@@ -213,7 +213,8 @@ class CampeonatoController
         }
     }
 
-    // GET /campeonatos/buscar?deporte={deporte}
+    // GET /campeonatos/deporte/{deporte}
+    // Este método permite buscar campeonatos por el deporte especificado
     public function showByDeporte(string $deporte)
     {
         // Validación: el parámetro "deporte" es requerido
@@ -254,59 +255,59 @@ class CampeonatoController
     // POST /campeonatos
     public function store()
     {
-        // Validación: el usuario debe estar autenticado
-        $user = getAuthUser(); // función que retorna el usuario autenticado
-        if (!$user) {
-            http_response_code(401);
-            echo json_encode([
-                'status'  => 401,
-                'message' => 'Usuario no autenticado'
-            ]);
-            return;
-        }
-
-        $data = json_decode(file_get_contents('php://input'), true);
-        if (!$data) {
-            http_response_code(400);
-            echo json_encode([
-                'status'  => 400,
-                'message' => 'Datos inválidos'
-            ]);
-            return;
-        }
-
-        // Validación de campos requeridos (ajustar según tus necesidades)
-        if (!isset($data['nombre']) || empty(trim($data['nombre']))) {
-            http_response_code(422);
-            echo json_encode([
-                'status'  => 422,
-                'message' => 'El campo "nombre" es requerido'
-            ]);
-            return;
-        }
-
-        $data = [
-            'nombre'                    => $_POST['nombre'] ?? null,
-            'descripcion'               => $_POST['descripcion'] ?? null,
-            'telefono_contacto'         => $user['telefono'] ?? null,
-            'estado'                    => $_POST['estado'] ?? 'borrador',
-            'inscripciones_abiertas'    => $_POST['inscripciones_abiertas'] ?? null,
-            'fecha_inicio'              => $_POST['fecha_inicio'] ?? null,
-            'fecha_fin'                 => $_POST['fecha_fin'] ?? null,
-            'deporte'                   => $_POST['deporte'] ?? null,
-            'numero_jugadores'          => $_POST['numero_jugadores'] ?? null,
-            'numero_suplentes'          => $_POST['numero_suplentes'] ?? null,
-            'numero_equipos'            => $_POST['numero_equipos'] ?? null,
-            'propietario_id'            => $user['id'] // ID del propietario del campeonato
-        ];
 
         try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!$data) {
+                http_response_code(400);
+                echo json_encode([
+                    'status'  => 400,
+                    'message' => 'Datos inválidos'
+                ]);
+                return;
+            }
+            // Validación: el usuario debe estar autenticado
+            $user = getAuthUser(); // función que retorna el usuario autenticado
+            if (!$user) {
+                http_response_code(401);
+                echo json_encode([
+                    'status'  => 401,
+                    'message' => 'Usuario no autenticado'
+                ]);
+                return;
+            }
+
+            // Validación de campos requeridos (ajustar según tus necesidades)
+            if (!isset($data['nombre']) || empty(trim($data['nombre']))) {
+                http_response_code(422);
+                echo json_encode([
+                    'status'  => 422,
+                    'message' => 'El campo "nombre" es requerido'
+                ]);
+                return;
+            }
+
+            $data = [
+                'nombre'                 => $data['nombre'] ?? null,
+                'descripcion'            => $data['descripcion'] ?? null,
+                'telefono_contacto'      => $this->user['telefono'] ?? null,
+                'estado'                 => $data['estado'] ?? 'borrador',
+                'inscripciones_abiertas' => $data['inscripciones_abiertas'] ?? null,
+                'fecha_inicio'           => $data['fecha_inicio'] ?? null,
+                'fecha_fin'              => $data['fecha_fin'] ?? null,
+                'deporte'                => $data['deporte'] ?? null,
+                'numero_jugadores'       => $data['numero_jugadores'] ?? null,
+                'numero_suplentes'       => $data['numero_suplentes'] ?? null,
+                'numero_equipos'         => $data['numero_equipos'] ?? null,
+                'propietario_id'         => $this->user['id'] ?? null
+            ];
+
             $created = $this->model->crear($data);
             if ($created) {
                 echo json_encode([
                     'status'  => 201,
                     'message' => 'Campeonato creado',
-                    'data'    => $data
+                    'data'    => $created
                 ]);
             } else {
                 http_response_code(500);
@@ -328,65 +329,67 @@ class CampeonatoController
     // PUT /campeonatos/{id}
     public function update(int $id)
     {
-        $data = json_decode(file_get_contents('php://input'), true);
-        if (!$data) {
-            http_response_code(400);
-            echo json_encode([
-                'status'  => 400,
-                'message' => 'Datos inválidos'
-            ]);
-            return;
-        }
-
-        // Se obtiene el campeonato actual
-        $campeonato = $this->model->obtenerPorId($id);
-        if (!$campeonato) {
-            http_response_code(404);
-            echo json_encode([
-                'status'  => 404,
-                'message' => 'Campeonato no encontrado'
-            ]);
-            return;
-        }
-
-        // Verificar que el usuario actual es el propietario del campeonato
-        if ($campeonato['propietario_id'] != $this->user['id']) {
-            http_response_code(403);
-            echo json_encode([
-                'status'  => 403,
-                'message' => 'No autorizado: solo el propietario puede actualizar el campeonato'
-            ]);
-            return;
-        }
-
-        // Validación de campos requeridos (ajustar según tus necesidades)
-        if (!isset($data['nombre']) || empty(trim($data['nombre']))) {
-            http_response_code(422);
-            echo json_encode([
-                'status'  => 422,
-                'message' => 'El campo "nombre" es requerido'
-            ]);
-            return;
-        }
-
-        $data = [
-            'nombre'                    => $_POST['nombre'] ?? null,
-            'descripcion'               => $_POST['descripcion'] ?? null,
-            'telefono_contacto'         => $user['telefono'] ?? null,
-            'estado'                    => $_POST['estado'] ?? 'borrador',
-            'inscripciones_abiertas'    => $_POST['inscripciones_abiertas'] ?? null,
-            'fecha_inicio'              => $_POST['fecha_inicio'] ?? null,
-            'fecha_fin'                 => $_POST['fecha_fin'] ?? null,
-            'deporte'                   => $_POST['deporte'] ?? null,
-            'numero_jugadores'          => $_POST['numero_jugadores'] ?? null,
-            'numero_suplentes'          => $_POST['numero_suplentes'] ?? null,
-            'numero_equipos'            => $_POST['numero_equipos'] ?? null
-        ];
-
         try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!$data) {
+                http_response_code(400);
+                echo json_encode([
+                    'status'  => 400,
+                    'message' => 'Datos inválidos'
+                ]);
+                return;
+            }
+
+            // Se obtiene el campeonato actual
+            $campeonato = $this->model->obtenerPorId($id);
+            if (!$campeonato) {
+                http_response_code(404);
+                echo json_encode([
+                    'status'  => 404,
+                    'message' => 'Campeonato no encontrado'
+                ]);
+                return;
+            }
+
+            // Verificar que el usuario actual es el propietario del campeonato
+            if ($campeonato['propietario_id'] != $this->user['id']) {
+                http_response_code(403);
+                echo json_encode([
+                    'status'  => 403,
+                    'message' => 'No autorizado: solo el propietario puede actualizar el campeonato'
+                ]);
+                return;
+            }
+
+            // Validación de campos requeridos (ajustar según tus necesidades)
+            if (!isset($data['nombre']) || empty(trim($data['nombre']))) {
+                http_response_code(422);
+                echo json_encode([
+                    'status'  => 422,
+                    'message' => 'El campo "nombre" es requerido'
+                ]);
+                return;
+            }
+
+            $data = [
+                'nombre'                 => $data['nombre'] ?? null,
+                'descripcion'            => $data['descripcion'] ?? null,
+                'telefono_contacto'      => $this->user['telefono'] ?? null,
+                'estado'                 => $data['estado'] ?? 'borrador',
+                'inscripciones_abiertas' => $data['inscripciones_abiertas'] ?? null,
+                'fecha_inicio'           => $data['fecha_inicio'] ?? null,
+                'fecha_fin'              => $data['fecha_fin'] ?? null,
+                'deporte'                => $data['deporte'] ?? null,
+                'numero_jugadores'       => $data['numero_jugadores'] ?? null,
+                'numero_suplentes'       => $data['numero_suplentes'] ?? null,
+                'numero_equipos'         => $data['numero_equipos'] ?? null,
+                'propietario_id'         => $this->user['id'] ?? null
+            ];
+            
             // Se asume que el modelo tiene un método 'actualizar' para modificar el registro existente.
             $updated = $this->model->actualizar($id, $data);
             if ($updated) {
+                http_response_code(200);
                 echo json_encode([
                     'status'  => 200,
                     'message' => 'Campeonato actualizado',

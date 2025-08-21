@@ -17,7 +17,7 @@ class MiembrosCampeonatosController
     }
 
     // Listar todos los miembros de campeonatos
-    public function index()
+    /*public function index()
     {
         try {
             $items = $this->model->obtenerMiembrosPorCampeonato(null);
@@ -26,7 +26,7 @@ class MiembrosCampeonatosController
             http_response_code(500);
             echo json_encode(['status' => 500, 'message' => 'Error al obtener miembros', 'details' => $e->getMessage()]);
         }
-    }
+    }*/
 
     // GET /miembros-campeonatos/{campeonatoId}
     public function show(int $campeonatoId)
@@ -167,6 +167,7 @@ class MiembrosCampeonatosController
     */
 
     // Desactivar miembro del campeonato
+    // PUT /miembros-campeonatos/{id}
     public function update(int $id)
     {
         if ($id <= 0) {
@@ -208,6 +209,7 @@ class MiembrosCampeonatosController
     }
 
     // Eliminar relación miembro-campeonato
+    // DELETE /miembros-campeonatos/{id}
     public function delete(int $id)
     {
         if ($id <= 0) {
