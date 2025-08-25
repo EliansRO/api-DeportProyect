@@ -51,6 +51,37 @@ class AmistadController
         }
     }
 
+    //GET /amistades/equipos → lista de equipos de amigos
+    public function equipos(){
+        try {
+            $equipos = $this->model->obtenerEquiposDeAmigos($this->user['id']);
+
+            // Si no tiene equipos, devolver 404
+            if(empty($equipos)){
+                http_response_code(404);
+                echo json_encode([
+                    'status' => 404,
+                    'message' => 'No tienes equipos de amigos',
+                    'data' => null
+                ]);
+                return;
+            }
+
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Equipos de amigos obtenidos correctamente',
+                'data' => $equipos
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 500,
+                'message' => 'Error al obtener equipos de amistades',
+                'details' => $e->getMessage()
+            ]);
+        }
+    }
+
     // POST /amistades → crear amistad
     public function store()
     {

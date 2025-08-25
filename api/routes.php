@@ -65,6 +65,11 @@ if ($resource === 'usuarios' && $method === 'POST' && isset($_SERVER['CONTENT_TY
     exit;
 }
 
+if ($resource === 'amistades' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'equipos') {
+    (new AmistadController($db))->equipos();
+    exit;
+}
+
 if ($resource === 'equipos' && $method === 'POST' && isset($parts[4]) && $parts[4] === 'buscar') {
     (new EquipoController($db))->buscarPorNombre();
     exit;

@@ -76,6 +76,24 @@ class AmistadModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Listar equipos de amigos de un usuario (sin duplicados)
+    public function obtenerEquiposDeAmigos($usuarioId){
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT e.id, e.nombre, e.descripcion, e.url_imagen
+            FROM Amistad a
+            JOIN Usuario u ON (
+                (a.usuario1_id = :id AND u.id = a.usuario2_id)
+                OR
+                (a.usuario2_id = :id AND u.id = a.usuario1_id)
+            )
+            JOIN Equipo e ON u.id = e.usuario_id
+            WHERE a.activo = 1
+        ");
+        $stmt->execute([':id' => $usuarioId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // Eliminar amistad (desactivar)
     public function eliminarAmistad($usuarioA, $usuarioB)
     {
