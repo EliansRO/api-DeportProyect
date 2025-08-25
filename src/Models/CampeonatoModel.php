@@ -1,0 +1,137 @@
+<?php
+
+namespace App\Models;
+
+use PDO;
+use PDOException;
+
+class CampeonatoModel
+{
+    private $db;
+    private $table = "Campeonato";
+
+    public function __construct(PDO $db)
+    {
+        $this->db = $db;
+    }
+
+    public function crear($data)
+    {
+        try {
+            $query = "INSERT INTO {$this->table} (
+                    nombre,
+                    descripcion,
+                    telefono_contacto,
+                    estado,
+                    inscripciones_abiertas,
+                    fecha_inicio,
+                    fecha_fin,
+                    deporte,
+                    numero_jugadores,
+                    numero_suplentes,
+                    numero_equipos,
+                    propietario_id
+                )
+                VALUES (
+                    :nombre,
+                    :descripcion,
+                    :telefono_contacto,
+                    :estado,
+                    :inscripciones_abiertas,
+                    :fecha_inicio,
+                    :fecha_fin, 
+                    :deporte,
+                    :numero_jugadores,
+                    :numero_suplentes,
+                    :numero_equipos,
+                    :propietario_id
+                )";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute($data);
+
+            $id = $this->db->lastInsertId();
+            return $this->obtenerPorId($id);
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    public function obtenerTodos()
+    {
+        $query = "SELECT * FROM {$this->table}";
+        return $this->db->query($query)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerPorId($id)
+    {
+        $query = "SELECT * FROM {$this->table} WHERE id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerPorPropietario($propietarioId)
+    {
+        $query = "SELECT * FROM {$this->table} WHERE propietario_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([$propietarioId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerPorNombre($nombre)
+    {
+        $query = "SELECT * FROM {$this->table} WHERE nombre LIKE ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute(['%' . $nombre . '%']);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerPorDeporte($deporte)
+    {
+        $query = "SELECT * FROM {$this->table} WHERE deporte = :deporte";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute(['deporte' => $deporte]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function eliminar($id)
+    {
+        $query = "DELETE FROM {$this->table} WHERE id = ?";
+        $stmt = $this->db->prepare($query);
+        return $stmt->execute([$id]);
+    }
+
+    // Actualizar un campeonato existente
+    public function actualizar($id, $data)
+    {
+        try {
+            $query = "UPDATE {$this->table} SET 
+                nombre = :nombre,
+                descripcion = :descripcion,
+                telefono_contacto = :telefono_contacto,
+                estado = :estado,
+                inscripciones_abiertas = :inscripciones_abiertas,
+                fecha_inicio = :fecha_inicio,
+                fecha_fin = :fecha_fin,
+                deporte = :deporte,
+                numero_jugadores = :numero_jugadores,
+                numero_suplentes = :numero_suplentes,
+                numero_equipos = :numero_equipos,
+                propietario_id = :propietario_id
+                WHERE id = :id";
+            $stmt = $this->db->prepare($query);
+            $data['id'] = $id; // Aseguramos que el ID se incluya en los datos
+            return $stmt->execute($data);
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    public function obtenerPorEstado($estado)
+    {
+        $query = "SELECT * FROM {$this->table} WHERE estado = :estado";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute(['estado' => $estado]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}

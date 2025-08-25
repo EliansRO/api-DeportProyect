@@ -14,9 +14,15 @@ use App\Controllers\{
     AmistadController,
     InvitacionEquipoController,
     MiembrosEquipoController,
+    CampeonatoController,             
+    EscenarioDeportivoController,
+    InvitacionCampeonatosController,  
+    MiembrosCampeonatosController,   
+    PartidoController,
+    FaseController
 };
 
-// Base de datos
+ // Base de datos
 $db = (new Database())->getConnection();
 
 // 🔍 Parsear URI
@@ -49,53 +55,101 @@ if (!$user) {
     exit;
 }
 
-// —> Nueva ruta para buscar por email vía POST
+// —> Nuevas rutas específicas
 if ($resource === 'usuarios' && $method === 'POST' && isset($_SERVER['CONTENT_TYPE'])
     && str_contains($_SERVER['CONTENT_TYPE'], 'application/json')
     && isset($parts[4]) && $parts[4] === 'email'
 ) {
-    // Leer body
     $body = json_decode(file_get_contents('php://input'), true);
     (new UsuarioController($db))->showByEmail($body['email'] ?? '');
     exit;
 }
 
-// —> Nueva ruta para buscar equipos por nombre vía POST
 if ($resource === 'equipos' && $method === 'POST' && isset($parts[4]) && $parts[4] === 'buscar') {
     (new EquipoController($db))->buscarPorNombre();
     exit;
 }
 
-// —> Nueva ruta para obtener los equipos del usuario autenticado
 if ($resource === 'equipos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'mis-equipos') {
     (new EquipoController($db))->misEquipos();
+    exit;
+}
+
+if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar') {
+    (new CampeonatoController($db))->buscarPorNombre();
+    exit;
+}
+
+if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'propietario') {
+    (new CampeonatoController($db))->showByPropietario($parts[5] ?? null);
+    exit;
+}
+
+// Nuevo endpoint para filtrar campeonatos por estado
+if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'estado') {
+    (new CampeonatoController($db))->showByEstado($parts[5] ?? null);
+    exit;
+}
+
+// Nuevo endpoint para buscar campeonatos por deporte
+if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'deporte') {
+    (new CampeonatoController($db))->showByDeporte($parts[5] ?? null);
+    exit;
+}
+
+/*if ($resource === 'miembros-campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar') {
+    (new MiembrosCampeonatosController($db))->searchByName();
+    exit;
+}*/
+
+if($resource === 'fases' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'campeonato') {
+    (new FaseController($db))->showByCampeonato($parts[5] ?? null);
+    exit;
+}
+
+if($resource === 'partidos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'fase') {
+    (new PartidoController($db))->showByFase($parts[5] ?? null);
+    exit;
+}
+
+if ($resource === 'partidos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'entre') {
+    $fechaInicio = $parts[5] ?? null;
+    $fechaFin = $parts[6] ?? null;
+    (new PartidoController($db))->buscarPorFecha($fechaInicio, $fechaFin);
+    exit;
+}
+
+if ($resource === 'escenarios-deportivos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar') {
+    (new EscenarioDeportivoController($db))->showByName($nombre = $parts[5] ?? null);
     exit;
 }
 
 
 // 🚦 Mapeo RESTful
 $map = [
-    'usuarios'              => UsuarioController::class,
-    'equipos'               => EquipoController::class,
-    'solicitudes-amistad'   => SolicitudAmistadController::class,
-    'amistades'             => AmistadController::class,
-    'invitaciones-equipo'   => InvitacionEquipoController::class,
-    'miembros-equipo'       => MiembrosEquipoController::class,
-    // Rutas de autenticación
-    'auth'                  => AuthController::class,
+    'usuarios'                 => UsuarioController::class,
+    'equipos'                  => EquipoController::class,
+    'solicitudes-amistad'      => SolicitudAmistadController::class,
+    'amistades'                => AmistadController::class,
+    'invitaciones-equipo'      => InvitacionEquipoController::class,
+    'miembros-equipo'          => MiembrosEquipoController::class,
+    'campeonatos'              => CampeonatoController::class,             // <-- nuevo
+    'miembros-campeonatos'     => MiembrosCampeonatosController::class,      // <-- nuevo
+    'invitaciones-campeonatos' => InvitacionCampeonatosController::class,    // <-- nuevo
+    'auth'                     => AuthController::class,
+    'escenarios-deportivos'    => EscenarioDeportivoController::class,
+    'partidos'                 => PartidoController::class,
+    'fases'                    => FaseController::class,
 ];
 
-// Validación de recurso
 if (!isset($map[$resource])) {
     http_response_code(404);
     echo json_encode(['error' => 'Ruta no encontrada']);
     exit;
 }
 
-// Instanciar controlador
 $ctrl = new $map[$resource]($db);
 
-// Enrutamiento por método
 switch ($method) {
     case 'GET':
         $id ? $ctrl->show((int)$id) : $ctrl->index();
@@ -107,11 +161,9 @@ switch ($method) {
     case 'PATCH':
         $id ? $ctrl->update((int)$id) : http_response_code(400) && print(json_encode(['error' => 'ID requerido']));
         break;
-
     case 'DELETE':
         $id ? $ctrl->delete((int)$id) : http_response_code(400) && print(json_encode(['error' => 'ID requerido']));
         break;
-
     default:
         http_response_code(405);
         echo json_encode(['error' => 'Método no permitido']);
