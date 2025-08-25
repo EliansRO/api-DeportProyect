@@ -91,14 +91,14 @@ if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $par
 }
 
 // Nuevo endpoint para filtrar campeonatos por estado
-if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar' && isset($_GET['estado'])) {
-    (new CampeonatoController($db))->showByEstado($_GET['estado']);
+if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'estado') {
+    (new CampeonatoController($db))->showByEstado($parts[5] ?? null);
     exit;
 }
 
 // Nuevo endpoint para buscar campeonatos por deporte
-if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar' && isset($_GET['deporte'])) {
-    (new CampeonatoController($db))->showByDeporte($_GET['deporte']);
+if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'deporte') {
+    (new CampeonatoController($db))->showByDeporte($parts[5] ?? null);
     exit;
 }
 

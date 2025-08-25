@@ -47,7 +47,10 @@ class CampeonatoModel
                     :propietario_id
                 )";
             $stmt = $this->db->prepare($query);
-            return $stmt->execute($data);
+            $stmt->execute($data);
+
+            $id = $this->db->lastInsertId();
+            return $this->obtenerPorId($id);
         } catch (PDOException $e) {
             return false;
         }
@@ -114,7 +117,7 @@ class CampeonatoModel
                 numero_jugadores = :numero_jugadores,
                 numero_suplentes = :numero_suplentes,
                 numero_equipos = :numero_equipos,
-                propietario_id = :propietario_id,
+                propietario_id = :propietario_id
                 WHERE id = :id";
             $stmt = $this->db->prepare($query);
             $data['id'] = $id; // Aseguramos que el ID se incluya en los datos
