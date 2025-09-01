@@ -90,6 +90,12 @@ if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $par
     exit;
 }
 
+if($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'propietario' 
+                               && isset($parts[5]) && $parts[5] === 'me') {
+    (new CampeonatoController($db))->showByCurrentUser();
+    exit;
+}
+
 // Nuevo endpoint para filtrar campeonatos por estado
 if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'estado') {
     (new CampeonatoController($db))->showByEstado($parts[5] ?? null);

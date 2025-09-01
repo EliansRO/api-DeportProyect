@@ -66,6 +66,44 @@ class CampeonatoController
         }
     }
 
+    //GET /campeonatos/propietario/me
+    public function showByCurrentUser()
+    {
+        // Validación: el usuario debe estar autenticado
+        if (!$this->user) {
+            http_response_code(401);
+            echo json_encode([
+                'status'  => 401,
+                'message' => 'Usuario no autenticado'
+            ]);
+            return;
+        }
+
+        try {
+            $items = $this->model->obtenerPorPropietario($this->user['id']);
+            if ($items) {
+                echo json_encode([
+                    'status'  => 200,
+                    'message' => 'Campeonatos obtenidos para el usuario actual',
+                    'data'    => $items
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'status'  => 404,
+                    'message' => 'No se encontraron campeonatos para este usuario'
+                ]);
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 500,
+                'message' => 'Error al obtener campeonatos para el usuario actual',
+                'details' => $e->getMessage()
+            ]);
+        }
+    }
+
     // GET /campeonatos/propietario/{propietarioId}
     public function showByPropietario(int $propietarioId)
     {

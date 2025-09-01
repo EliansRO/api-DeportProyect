@@ -85,46 +85,57 @@ class AmistadController
     // POST /amistades → crear amistad
     public function store()
     {
-        $data = json_decode(file_get_contents("php://input"), true);
+        try{
+            $data = json_decode(file_get_contents("php://input"), true);
 
-        // Validar que el campo usuario_id no esté vacío
-        if (empty($data['usuario_id'])) {
-            http_response_code(400);
-            echo json_encode([
-                'status' => 400,
-                'message' => 'Falta el ID del otro usuario',
-                'data' => null
-            ]);
-            return;
+            // Validar que el campo usuario_id no esté vacío
+            if (empty($data['usuario_id'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 400,
+                    'message' => 'Falla en el ingreso del ID del usuario',
+                    'data' => null
+                ]);
+                return;
+            }
+
+            // Validar que el usuario no intente ser amigo de sí mismo
+            if ($data['usuario_id'] == $this->user['id']) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 400,
+                    'message' => 'No puedes ser amigo de ti mismo',
+                    'data' => null
+                ]);
+                return;
+            }
+
+            $resultado = $this->model->crearAmistad($this->user['id'], $data['usuario_id']);
+
+            // Si el resultado es un array con un error, devolver 409
+            if (is_array($resultado) && isset($resultado['error'])) {
+                http_response_code(409);
+                echo json_encode([
+                    'status' => 409,
+                    'message' => $resultado['error'],
+                    'data' => null
+                ]);
+            } else {
+                http_response_code(201);
+                echo json_encode([
+                    'status' => 201,
+                    'message' => 'Amistad creada exitosamente',
+                    'data' => null
+                ]);
+            }
+
         }
-
-        // Validar que el usuario no intente ser amigo de sí mismo
-        if ($data['usuario_id'] == $this->user['id']) {
-            http_response_code(400);
+        catch (PDOException $e) {
+            http_response_code(500);
             echo json_encode([
-                'status' => 400,
-                'message' => 'No puedes ser amigo de ti mismo',
-                'data' => null
-            ]);
-            return;
-        }
-
-        $resultado = $this->model->crearAmistad($this->user['id'], $data['usuario_id']);
-
-        // Si el resultado es un array con un error, devolver 409
-        if (is_array($resultado) && isset($resultado['error'])) {
-            http_response_code(409);
-            echo json_encode([
-                'status' => 409,
-                'message' => $resultado['error'],
-                'data' => null
-            ]);
-        } else {
-            http_response_code(201);
-            echo json_encode([
-                'status' => 201,
-                'message' => 'Amistad creada exitosamente',
-                'data' => null
+                'status' => 500,
+                'message' => 'Error al crear amistad',
+                'details' => $e->getMessage()
             ]);
         }
     }
@@ -132,20 +143,52 @@ class AmistadController
     // DELETE /amistades/{id} → eliminar amistad con usuario_id = {id}
     public function delete(int $id)
     {
-        $ok = $this->model->eliminarAmistad($this->user['id'], $id);
+        try{
+            //Validar que el id esté presente
+            if (empty($id)) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 400,
+                    'message' => 'Falla en el ingreso del ID del usuario',
+                    'data' => null
+                ]);
+                return;
+            }
 
-        if ($ok) {
+            //Validar que el id no sea el mismo que el del usuario autenticado
+            if ($id == $this->user['id']) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 400,
+                    'message' => 'No puedes eliminar amistad contigo mismo',
+                    'data' => null
+                ]);
+                return;
+            }
+
+            $ok = $this->model->eliminarAmistad($this->user['id'], $id);
+
+            if ($ok) {
+                echo json_encode([
+                    'status' => 200,
+                    'message' => 'Amistad eliminada correctamente',
+                    'data' => null
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'status' => 404,
+                    'message' => 'Amistad no encontrada',
+                    'data' => null
+                ]);
+            }
+        }
+        catch (PDOException $e) {
+            http_response_code(500);
             echo json_encode([
-                'status' => 200,
-                'message' => 'Amistad eliminada correctamente',
-                'data' => null
-            ]);
-        } else {
-            http_response_code(404);
-            echo json_encode([
-                'status' => 404,
-                'message' => 'Amistad no encontrada',
-                'data' => null
+                'status' => 500,
+                'message' => 'Error al eliminar amistad',
+                'details' => $e->getMessage()
             ]);
         }
     }
