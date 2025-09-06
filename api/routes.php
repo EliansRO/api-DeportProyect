@@ -90,8 +90,7 @@ if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $par
     exit;
 }
 
-if($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'propietario' 
-                               && isset($parts[5]) && $parts[5] === 'me') {
+if($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'me' ) {
     (new CampeonatoController($db))->showByCurrentUser();
     exit;
 }

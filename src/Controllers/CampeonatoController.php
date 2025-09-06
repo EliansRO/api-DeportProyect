@@ -66,7 +66,7 @@ class CampeonatoController
         }
     }
 
-    //GET /campeonatos/propietario/me
+    //GET /campeonatos/me
     public function showByCurrentUser()
     {
         // Validación: el usuario debe estar autenticado
