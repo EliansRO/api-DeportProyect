@@ -30,7 +30,8 @@ class CampeonatoModel
                     numero_jugadores,
                     numero_suplentes,
                     numero_equipos,
-                    propietario_id
+                    propietario_id,
+                    privacidad
                 )
                 VALUES (
                     :nombre,
@@ -44,7 +45,8 @@ class CampeonatoModel
                     :numero_jugadores,
                     :numero_suplentes,
                     :numero_equipos,
-                    :propietario_id
+                    :propietario_id,
+                    :privacidad
                 )";
             $stmt = $this->db->prepare($query);
             $stmt->execute($data);
@@ -59,6 +61,12 @@ class CampeonatoModel
     public function obtenerTodos()
     {
         $query = "SELECT * FROM {$this->table}";
+        return $this->db->query($query)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerCampeonatosPublicos()
+    {
+        $query = "SELECT * FROM {$this->table} WHERE privacidad = 'publico'";
         return $this->db->query($query)->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -117,7 +125,8 @@ class CampeonatoModel
                 numero_jugadores = :numero_jugadores,
                 numero_suplentes = :numero_suplentes,
                 numero_equipos = :numero_equipos,
-                propietario_id = :propietario_id
+                propietario_id = :propietario_id,
+                privacidad = :privacidad
                 WHERE id = :id";
             $stmt = $this->db->prepare($query);
             $data['id'] = $id; // Aseguramos que el ID se incluya en los datos

@@ -65,8 +65,37 @@ class AuthController
                 ':rol'              => $data['rol'] ?? 'player',
             ]);
 
+            // Obtiene el ID del usuario registrado
+            $userId = $this->db->lastInsertId();
+
+            // Obtiene los datos del usuario registrado
+            $stmt = $this->db->prepare("SELECT * FROM Usuario WHERE id = :id");
+            $stmt->bindParam(':id', $userId);
+            $stmt->execute();
+            $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Elimina el password antes de devolverlo
+            unset($usuario['password']);
+
+            // Genera el token JWT
+            $payload = [
+                'sub'    => $usuario['id'],
+                'correo' => $usuario['correo'],
+                'rol'    => $usuario['rol'],
+                'exp'    => time() + (60 * 60 * 24)
+            ];
+            $token = JWT::encode($payload, $this->jwtSecret, 'HS256');
+
+            // Devuelve la respuesta con status, message y data
             http_response_code(201);
-            echo json_encode(['mensaje' => 'Usuario registrado correctamente']);
+            echo json_encode([
+                'status'  => 201,
+                'message' => 'Usuario registrado correctamente',
+                'data'    => [
+                    'user'  => $usuario,
+                    'token' => $token
+                ]
+            ]);
         } catch (PDOException $e) {
             if ($e->getCode() === '23000') {
                 http_response_code(409);

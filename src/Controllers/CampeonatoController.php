@@ -38,6 +38,26 @@ class CampeonatoController
         }
     }
 
+    // GET /campeonatos/publicos
+    public function indexPublicos()
+    {
+        try {
+            $items = $this->model->obtenerCampeonatosPublicos();
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Campeonatos públicos obtenidos',
+                'data' => $items
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 500,
+                'message' => 'Error al obtener campeonatos públicos',
+                'details' => $e->getMessage()
+            ]);
+        }
+    }
+
     // GET /campeonatos/{id}
     public function show(int $id)
     {
@@ -88,7 +108,7 @@ class CampeonatoController
                     'data'    => $items
                 ]);
             } else {
-                http_response_code(404);
+              
                 echo json_encode([
                     'status'  => 404,
                     'message' => 'No se encontraron campeonatos para este propietario'
@@ -299,7 +319,8 @@ class CampeonatoController
                 'numero_jugadores'       => $data['numero_jugadores'] ?? null,
                 'numero_suplentes'       => $data['numero_suplentes'] ?? null,
                 'numero_equipos'         => $data['numero_equipos'] ?? null,
-                'propietario_id'         => $this->user['id'] ?? null
+                'propietario_id'         => $this->user['id'] ?? null,
+                'privacidad'             => $data['privacidad'] ?? 'publico'
             ];
 
             $created = $this->model->crear($data);
@@ -383,7 +404,8 @@ class CampeonatoController
                 'numero_jugadores'       => $data['numero_jugadores'] ?? null,
                 'numero_suplentes'       => $data['numero_suplentes'] ?? null,
                 'numero_equipos'         => $data['numero_equipos'] ?? null,
-                'propietario_id'         => $this->user['id'] ?? null
+                'propietario_id'         => $this->user['id'] ?? null,
+                'privacidad'              => $data['privacidad'] ?? 'publico'
             ];
             
             // Se asume que el modelo tiene un método 'actualizar' para modificar el registro existente.
