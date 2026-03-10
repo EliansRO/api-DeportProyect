@@ -101,6 +101,32 @@ class EquipoController
         }
     }
 
+    public function equiposDeAmigos()
+    {
+        try {
+            $usuarioId = $this->user['id'];
+            $equipos = $this->model->obtenerDeAmigos($usuarioId);
+
+            if($equipos === false){
+                http_response_code(404);
+                echo json_encode([
+                    'status' => 404,
+                    'message' => 'No se encontraron equipos de amigos',
+                    'data' => null
+                ]);
+                return;
+            }
+
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Equipos de amigos obtenidos correctamente',
+                'data' =>  $equipos
+            ]);
+        } catch (PDOException $e) {
+            $this->errorResponse('Error al obtener los equipos de amigos', $e);
+        }
+    }
+
     public function store()
     {
         $data = json_decode(file_get_contents("php://input"), true);

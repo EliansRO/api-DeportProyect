@@ -107,6 +107,13 @@ if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $par
     exit;
 }
 
+
+if ($resource === 'campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'publicos') {
+    (new CampeonatoController($db))->indexPublicos();
+    exit;
+}
+
+
 /*if ($resource === 'miembros-campeonatos' && $method === 'GET' && isset($parts[4]) && $parts[4] === 'buscar') {
     (new MiembrosCampeonatosController($db))->searchByName();
     exit;

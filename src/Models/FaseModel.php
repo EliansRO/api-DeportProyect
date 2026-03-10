@@ -38,8 +38,8 @@ class FaseModel
     public function crear($data)
     {
         $sql = "INSERT INTO {$this->table} 
-                (campeonato_id, nombre, orden, tipo, estado, fecha_inicio, fecha_fin) 
-                VALUES (:campeonato_id, :nombre, :orden, :tipo, :estado, :fecha_inicio, :fecha_fin)";
+                (campeonato_id, nombre, orden, tipo, estado, fecha_inicio, fecha_fin, numero_equipos) 
+                VALUES (:campeonato_id, :nombre, :orden, :tipo, :estado, :fecha_inicio, :fecha_fin, numero_equipos)";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute($data);
     }
@@ -48,7 +48,7 @@ class FaseModel
     {
         $sql = "UPDATE {$this->table} 
                 SET campeonato_id = :campeonato_id, nombre = :nombre, orden = :orden, tipo = :tipo, estado = :estado, 
-                    fecha_inicio = :fecha_inicio, fecha_fin = :fecha_fin, actualizado_en = CURRENT_TIMESTAMP
+                    fecha_inicio = :fecha_inicio, fecha_fin = :fecha_fin, numero_equipos = :numero_equipos, actualizado_en = CURRENT_TIMESTAMP
                 WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         $data['id'] = $id;

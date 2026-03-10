@@ -176,7 +176,26 @@ class FaseController
                 return;
             }
 
-            $data = json_decode(file_get_contents('php://input'), true);
+            $raw = file_get_contents('php://input');
+            $input = json_decode($raw, true) ?: [];
+
+            $fields = [
+                'campeonato_id',
+                'nombre',
+                'orden',
+                'tipo',
+                'estado',
+                'fecha_inicio',
+                'fecha_fin',
+                'numero_equipos'
+            ];
+
+            $data = [];
+            foreach ($fields as $field) {
+                // Si el campo viene en la petición lo usamos; si no, lo dejamos null
+                $data[$field] = array_key_exists($field, $input) ? $input[$field] : null;
+            }
+
             if ($this->model->actualizar($id, $data)) {
                 echo json_encode([
                     'status'  => 200,

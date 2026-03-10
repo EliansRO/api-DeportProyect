@@ -116,4 +116,17 @@ class EquipoModel
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function obtenerDeAmigos(int $usuarioId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT e.* FROM Equipo e
+            INNER JOIN MiembrosEquipo me ON e.id = me.equipo_id
+            INNER JOIN Amigos a ON me.usuario_id = a.amigo_id
+            WHERE a.usuario_id = :usuarioId
+        ");
+        $stmt->bindParam(':usuarioId', $usuarioId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
